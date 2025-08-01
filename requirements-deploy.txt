@@ -1,0 +1,18 @@
+# Deployment-friendly requirements (removes problematic audio deps)
+
+# Core Web Framework
+fastapi>=0.104.0
+uvicorn>=0.24.0
+websockets>=11.0
+aiohttp>=3.9.0
+python-multipart>=0.0.6
+
+# AI & Language Models  
+openai>=1.0.0
+
+# Basic Processing
+numpy>=1.24.0
+python-dotenv>=1.0.0
+
+# For RAG system
+sentence-transformers>=2.2.0
