@@ -169,6 +169,43 @@
             color: rgba(255, 255, 255, 0.5);
         }
         
+        /* Voice button */
+        .voice-button {
+            position: absolute;
+            top: 74%;
+            left: 71%;
+            width: 7%;
+            height: 8%;
+            background: rgba(255, 179, 92, 0.3);
+            border: 2px solid var(--amber-neon);
+            border-radius: 50%;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+        
+        .voice-button:hover:not(:disabled) {
+            transform: scale(1.1);
+            box-shadow: 0 0 25px var(--amber-neon);
+            background: rgba(255, 179, 92, 0.5);
+        }
+        
+        .voice-button.recording {
+            background: rgba(255, 75, 75, 0.5);
+            border-color: #ff4b4b;
+            animation: pulse 1s infinite;
+        }
+        
+        .voice-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
         /* Send button */
         .send {
             position: absolute;
@@ -391,9 +428,10 @@
             </div>
         </div>
         
-        <input type="text" id="prompt" placeholder="Type your question to the Oracle..." 
+        <input type="text" id="prompt" placeholder="Type or speak your question to the Oracle..." 
                onkeypress="handleKeyPress(event)" autocomplete="off">
         
+        <button class="voice-button" id="voiceButton" onclick="toggleVoiceInput()">🎤</button>
         <button class="send" id="sendButton" onclick="sendMessage()">⚡</button>
     </div>
 
@@ -562,6 +600,8 @@
         
         // Global instance
         let oracleClient;
+        let speechRecognition = null;
+        let isRecording = false;
         
         function sendMessage() {
             const input = document.getElementById('prompt');
@@ -576,6 +616,90 @@
             if (event.key === 'Enter' && !event.shiftKey) {
                 event.preventDefault();
                 sendMessage();
+            }
+        }
+        
+        function initializeSpeechRecognition() {
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                speechRecognition = new SpeechRecognition();
+                
+                speechRecognition.continuous = false;
+                speechRecognition.interimResults = true;
+                speechRecognition.lang = 'en-US';
+                
+                speechRecognition.onstart = function() {
+                    isRecording = true;
+                    const voiceButton = document.getElementById('voiceButton');
+                    voiceButton.classList.add('recording');
+                    voiceButton.innerHTML = '🔴';
+                    console.log('Voice recognition started');
+                };
+                
+                speechRecognition.onresult = function(event) {
+                    let finalTranscript = '';
+                    let interimTranscript = '';
+                    
+                    for (let i = event.resultIndex; i < event.results.length; i++) {
+                        const transcript = event.results[i][0].transcript;
+                        if (event.results[i].isFinal) {
+                            finalTranscript += transcript;
+                        } else {
+                            interimTranscript += transcript;
+                        }
+                    }
+                    
+                    const promptInput = document.getElementById('prompt');
+                    if (finalTranscript) {
+                        promptInput.value = finalTranscript;
+                        // Auto-send when speech is complete
+                        setTimeout(() => {
+                            if (finalTranscript.trim()) {
+                                sendMessage();
+                            }
+                        }, 500);
+                    } else {
+                        // Show interim results
+                        promptInput.value = interimTranscript;
+                    }
+                };
+                
+                speechRecognition.onend = function() {
+                    isRecording = false;
+                    const voiceButton = document.getElementById('voiceButton');
+                    voiceButton.classList.remove('recording');
+                    voiceButton.innerHTML = '🎤';
+                    console.log('Voice recognition ended');
+                };
+                
+                speechRecognition.onerror = function(event) {
+                    console.error('Speech recognition error:', event.error);
+                    isRecording = false;
+                    const voiceButton = document.getElementById('voiceButton');
+                    voiceButton.classList.remove('recording');
+                    voiceButton.innerHTML = '🎤';
+                };
+                
+                return true;
+            } else {
+                console.log('Speech recognition not supported');
+                document.getElementById('voiceButton').style.display = 'none';
+                return false;
+            }
+        }
+        
+        function toggleVoiceInput() {
+            if (!speechRecognition) {
+                if (!initializeSpeechRecognition()) {
+                    alert('Speech recognition not supported in this browser');
+                    return;
+                }
+            }
+            
+            if (isRecording) {
+                speechRecognition.stop();
+            } else {
+                speechRecognition.start();
             }
         }
         
@@ -614,6 +738,9 @@
         function initializeOracle() {
             if (!authenticated) return;
             oracleClient = new OracleClient();
+            
+            // Initialize speech recognition
+            initializeSpeechRecognition();
         }
     </script>
 </body>
