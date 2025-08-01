@@ -182,6 +182,29 @@ To change the password:
 
 **Important:** Always use password protection when deploying publicly to avoid unexpected API costs.
 
+## Future ML Deployment Platforms
+
+For the full installation with GPU-accelerated features (SadTalker, NVIDIA Audio2Face, computer vision):
+
+### GPU Cloud Platforms
+1. **RunPod** - GPU cloud with RTX 4090s, perfect for ML inference
+2. **Vast.ai** - Cost-effective GPU rentals, good for development/testing
+3. **Lambda Labs** - ML-focused cloud with NVIDIA partnership
+4. **Paperspace Gradient** - Jupyter + deployment pipeline for ML workflows
+5. **Google Cloud Platform** - Enterprise-grade with custom GPU VMs
+6. **AWS EC2 G4/P4 instances** - Industry standard for production ML
+
+### Local Hardware Setup
+- **Recommended**: RTX 4090 or dual 4090 setup
+- **OS**: Windows (for TouchDesigner integration)
+- **RAM**: 32GB+ for large ML models
+- **Storage**: NVMe SSD for fast model loading
+
+### Deployment Strategy
+- **Web Demo**: Railway/Render (current Oracle chatbot)
+- **Development**: Local machine with 4090
+- **Production Installation**: On-site hardware or dedicated GPU cloud instance
+
 ## Quick Start
 
 ```bash
