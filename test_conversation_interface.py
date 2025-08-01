@@ -383,8 +383,8 @@ def main():
     """Start the Oracle interface"""
     oracle = SimpleOracleInterface()
     
-    # Use Railway's PORT or fallback to 8500
-    port = int(os.getenv("PORT", 8500))
+    # Use Railway's PORT or fallback to 8080
+    port = int(os.getenv("PORT", "8080"))
     
     logger.info("Starting Simple Oracle Test Interface...")
     logger.info(f"Server starting on 0.0.0.0:{port}")
