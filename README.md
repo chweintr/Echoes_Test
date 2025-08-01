@@ -203,7 +203,29 @@ For the full installation with GPU-accelerated features (SadTalker, NVIDIA Audio
 ### Deployment Strategy
 - **Web Demo**: Railway/Render (current Oracle chatbot)
 - **Development**: Local machine with 4090
-- **Production Installation**: On-site hardware or dedicated GPU cloud instance
+- **Production Installation**: **RunPod** (chosen for GPU cloud deployment)
+
+## RunPod Deployment (Selected Platform)
+
+**Why RunPod:**
+- Pre-configured for AI workloads (Audio2Face, SadTalker ready)
+- RTX 4090 availability at $0.74/hour
+- Native WebSocket support for real-time streaming
+- Serverless option - pay only when visitors are talking
+- Perfect for audio-to-audio pipeline with GPU acceleration
+
+**Audio-to-Audio Pipeline on RunPod:**
+```python
+# Yes, audio-to-audio will work perfectly on RunPod:
+# Visitor speaks → Microphone → Speech-to-Text → AI Response → TTS → Avatar Animation
+# All GPU-accelerated for minimal latency
+```
+
+### Current Feature Status
+- **Text Input**: ✅ Working (type questions)
+- **Voice Output**: ✅ Working (ElevenLabs TTS)
+- **Voice Input**: ⏳ Not yet implemented (planned for RunPod deployment)
+- **Real-time Avatar**: ⏳ Future (Audio2Face/SadTalker on RunPod)
 
 ## Quick Start
 
