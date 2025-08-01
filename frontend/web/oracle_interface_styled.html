@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Indiana Oracle Interface</title>
+    <style>
+        :root {
+            --cyan-neon: #00eaff;
+            --magenta-neon: #ff4bff;
+            --amber-neon: #ffb35c;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #000;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+        
+        .frame {
+            background: url("/assets/oracle-frame.png") center/contain no-repeat;
+            width: min(1200px, 95vw);
+            aspect-ratio: 1580 / 750;
+            position: relative;
+            filter: drop-shadow(0 0 15px var(--cyan-neon))
+                    drop-shadow(0 0 18px var(--magenta-neon));
+        }
+        
+        /* Top banner - persona selector */
+        .top-banner {
+            position: absolute;
+            top: 18%;
+            left: 35%;
+            width: 30%;
+            height: 5%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .persona-button {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--cyan-neon);
+            color: white;
+            padding: 0.3rem 1rem;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.8rem;
+            backdrop-filter: blur(5px);
+        }
+        
+        .persona-button:hover {
+            background: rgba(0, 234, 255, 0.2);
+            box-shadow: 0 0 10px var(--cyan-neon);
+            transform: translateY(-2px);
+        }
+        
+        .persona-button.active {
+            background: rgba(255, 75, 255, 0.3);
+            border-color: var(--magenta-neon);
+            box-shadow: 0 0 15px var(--magenta-neon);
+        }
+        
+        /* Chat log - main window */
+        .chat-log {
+            position: absolute;
+            top: 35%;
+            left: 17%;
+            width: 66%;
+            height: 33%;
+            overflow-y: auto;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(3px);
+            border-radius: 5px;
+        }
+        
+        /* Custom scrollbar */
+        .chat-log::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .chat-log::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+        }
+        
+        .chat-log::-webkit-scrollbar-thumb {
+            background: var(--cyan-neon);
+            border-radius: 4px;
+            box-shadow: 0 0 5px var(--cyan-neon);
+        }
+        
+        .message {
+            margin-bottom: 12px;
+            padding: 8px 12px;
+            border-radius: 15px;
+            max-width: 85%;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .user-message {
+            background: rgba(0, 234, 255, 0.2);
+            border: 1px solid var(--cyan-neon);
+            margin-left: auto;
+            text-align: right;
+            box-shadow: 0 0 8px rgba(0, 234, 255, 0.3);
+        }
+        
+        .ai-message {
+            background: rgba(255, 75, 255, 0.2);
+            border: 1px solid var(--magenta-neon);
+            margin-right: auto;
+            box-shadow: 0 0 8px rgba(255, 75, 255, 0.3);
+        }
+        
+        .status-message {
+            background: rgba(255, 179, 92, 0.2);
+            border: 1px solid var(--amber-neon);
+            text-align: center;
+            font-style: italic;
+            margin: 0 auto;
+            max-width: 60%;
+            box-shadow: 0 0 8px rgba(255, 179, 92, 0.3);
+        }
+        
+        /* Input field */
+        #prompt {
+            position: absolute;
+            top: 74%;
+            left: 22%;
+            width: 55%;
+            height: 8%;
+            padding: 0.8rem;
+            border: 2px solid var(--cyan-neon);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            font-size: 1rem;
+            border-radius: 25px;
+            outline: none;
+            backdrop-filter: blur(5px);
+            transition: all 0.3s ease;
+        }
+        
+        #prompt:focus {
+            box-shadow: 0 0 20px var(--cyan-neon);
+            background: rgba(0, 234, 255, 0.1);
+        }
+        
+        #prompt::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        /* Send button */
+        .send {
+            position: absolute;
+            top: 74%;
+            left: 79%;
+            width: 9%;
+            height: 8%;
+            background: linear-gradient(135deg, var(--cyan-neon), var(--magenta-neon));
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+        
+        .send:hover:not(:disabled) {
+            transform: scale(1.1);
+            box-shadow: 0 0 25px var(--magenta-neon);
+        }
+        
+        .send:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* Connection status */
+        .connection-status {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            backdrop-filter: blur(5px);
+        }
+        
+        .connected {
+            background: rgba(0, 234, 255, 0.3);
+            border: 1px solid var(--cyan-neon);
+            box-shadow: 0 0 10px rgba(0, 234, 255, 0.4);
+        }
+        
+        .disconnected {
+            background: rgba(255, 75, 255, 0.3);
+            border: 1px solid var(--magenta-neon);
+            box-shadow: 0 0 10px rgba(255, 75, 255, 0.4);
+        }
+        
+        .thinking-animation {
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        
+        /* Mobile responsive */
+        @media (max-width: 620px) {
+            .frame {
+                width: 100vw;
+            }
+            
+            .chat-log {
+                height: 40%;
+                font-size: 0.9rem;
+            }
+            
+            .persona-button {
+                font-size: 0.7rem;
+                padding: 0.2rem 0.8rem;
+            }
+            
+            #prompt {
+                font-size: 0.9rem;
+            }
+        }
+        
+        /* Loading overlay */
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: var(--cyan-neon);
+            text-shadow: 0 0 20px var(--cyan-neon);
+            z-index: 1000;
+        }
+        
+        .loading-overlay.hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="loading-overlay" id="loadingOverlay">
+        Initializing Oracle System...
+    </div>
+    
+    <div class="frame">
+        <div class="connection-status disconnected" id="connectionStatus">
+            Connecting...
+        </div>
+        
+        <div class="top-banner">
+            <button class="persona-button active" onclick="switchPersona('indiana-oracle')">
+                Oracle
+            </button>
+            <button class="persona-button" onclick="switchPersona('kurt-vonnegut')">
+                Vonnegut
+            </button>
+        </div>
+        
+        <div class="chat-log" id="chatLog">
+            <div class="status-message">
+                Oracle system ready. Ask your question...
+            </div>
+        </div>
+        
+        <input type="text" id="prompt" placeholder="Type your question to the Oracle..." 
+               onkeypress="handleKeyPress(event)" autocomplete="off">
+        
+        <button class="send" id="sendButton" onclick="sendMessage()">⚡</button>
+    </div>
+
+    <script>
+        class OracleClient {
+            constructor() {
+                this.ws = null;
+                this.currentPersona = 'indiana-oracle';
+                this.isConnected = false;
+                this.audioQueue = [];
+                this.isPlaying = false;
+                this.connect();
+            }
+            
+            connect() {
+                this.ws = new WebSocket('ws://localhost:8500/oracle/session');
+                
+                this.ws.onopen = () => {
+                    console.log('Connected to Oracle');
+                    this.isConnected = true;
+                    this.updateConnectionStatus('Connected', true);
+                    document.getElementById('loadingOverlay').classList.add('hidden');
+                };
+                
+                this.ws.onclose = () => {
+                    console.log('Disconnected from Oracle');
+                    this.isConnected = false;
+                    this.updateConnectionStatus('Disconnected', false);
+                    setTimeout(() => this.connect(), 3000);
+                };
+                
+                this.ws.onerror = (error) => {
+                    console.error('WebSocket error:', error);
+                    this.updateConnectionStatus('Error', false);
+                };
+                
+                this.ws.onmessage = (event) => {
+                    this.handleMessage(JSON.parse(event.data));
+                };
+            }
+            
+            handleMessage(data) {
+                switch(data.type) {
+                    case 'status':
+                        this.addMessage(data.message, 'status');
+                        break;
+                        
+                    case 'ai_response':
+                        this.addMessage(data.text, 'ai', data.persona);
+                        break;
+                        
+                    case 'audio_response':
+                        this.queueAudio(data.audio);
+                        break;
+                        
+                    case 'persona_switched':
+                        this.addMessage(data.message, 'status');
+                        break;
+                        
+                    case 'error':
+                        this.addMessage(`Error: ${data.message}`, 'status');
+                        break;
+                }
+                
+                // Re-enable input
+                document.getElementById('sendButton').disabled = false;
+                document.getElementById('prompt').disabled = false;
+            }
+            
+            sendMessage(text) {
+                if (!this.isConnected || !text.trim()) return;
+                
+                this.addMessage(text, 'user');
+                
+                this.ws.send(JSON.stringify({
+                    type: 'user_message',
+                    text: text,
+                    persona: this.currentPersona
+                }));
+                
+                // Disable input while processing
+                document.getElementById('sendButton').disabled = true;
+                document.getElementById('prompt').disabled = true;
+                document.getElementById('prompt').value = '';
+            }
+            
+            switchPersona(persona) {
+                this.currentPersona = persona;
+                
+                // Update UI
+                document.querySelectorAll('.persona-button').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                event.target.classList.add('active');
+                
+                if (this.isConnected) {
+                    this.ws.send(JSON.stringify({
+                        type: 'switch_persona',
+                        persona: persona
+                    }));
+                }
+            }
+            
+            addMessage(text, type, persona = null) {
+                const chatLog = document.getElementById('chatLog');
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${type}-message`;
+                
+                if (type === 'status' && text.includes('thinking')) {
+                    messageDiv.innerHTML = text.replace('...', ' <span class="thinking-animation">...</span>');
+                } else {
+                    messageDiv.textContent = text;
+                }
+                
+                chatLog.appendChild(messageDiv);
+                chatLog.scrollTop = chatLog.scrollHeight;
+            }
+            
+            queueAudio(base64Audio) {
+                this.audioQueue.push(base64Audio);
+                if (!this.isPlaying) {
+                    this.playNextAudio();
+                }
+            }
+            
+            async playNextAudio() {
+                if (this.audioQueue.length === 0) {
+                    this.isPlaying = false;
+                    return;
+                }
+                
+                this.isPlaying = true;
+                const audioData = this.audioQueue.shift();
+                
+                try {
+                    const audio = new Audio(`data:audio/mp3;base64,${audioData}`);
+                    
+                    // Set volume
+                    if (this.currentPersona === 'kurt-vonnegut') {
+                        audio.volume = 1.0; // Max volume for Vonnegut
+                    } else {
+                        audio.volume = 0.9; // Slightly higher volume for Oracle
+                    }
+                    
+                    audio.onended = () => {
+                        this.playNextAudio();
+                    };
+                    
+                    await audio.play();
+                } catch (e) {
+                    console.error('Audio play failed:', e);
+                    this.playNextAudio();
+                }
+            }
+            
+            
+            updateConnectionStatus(message, connected) {
+                const statusDiv = document.getElementById('connectionStatus');
+                statusDiv.textContent = message;
+                statusDiv.className = `connection-status ${connected ? 'connected' : 'disconnected'}`;
+            }
+        }
+        
+        // Global instance
+        let oracleClient;
+        
+        function initializeOracle() {
+            oracleClient = new OracleClient();
+        }
+        
+        function sendMessage() {
+            const input = document.getElementById('prompt');
+            oracleClient.sendMessage(input.value);
+        }
+        
+        function switchPersona(persona) {
+            oracleClient.switchPersona(persona);
+        }
+        
+        function handleKeyPress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+        
+        // Initialize on load
+        window.addEventListener('load', initializeOracle);
+    </script>
+</body>
+</html>

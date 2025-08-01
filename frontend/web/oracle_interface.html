@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Indiana Oracle Entity Project</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0a0a0a;
+            color: #ffffff;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        /* Particle background */
+        #particle-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+        
+        /* Main container */
+        .oracle-container {
+            position: relative;
+            z-index: 2;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        /* Avatar display */
+        .avatar-container {
+            width: 600px;
+            height: 600px;
+            position: relative;
+            margin-bottom: 40px;
+        }
+        
+        #avatar-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+            display: none;
+        }
+        
+        .particle-avatar {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        
+        /* Holographic rim effect */
+        .hologram-rim {
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            right: -5px;
+            bottom: -5px;
+            border-radius: 50%;
+            background: radial-gradient(
+                circle at center,
+                transparent 45%,
+                rgba(0, 206, 209, 0.3) 50%,
+                rgba(0, 206, 209, 0.1) 60%,
+                transparent 70%
+            );
+            animation: pulse 2s ease-in-out infinite;
+            pointer-events: none;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.05); }
+        }
+        
+        /* Oracle title */
+        .oracle-title {
+            font-family: 'Bebas Neue', cursive;
+            font-size: 4rem;
+            text-align: center;
+            background: linear-gradient(45deg, #00ced1, #ffd700);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 20px;
+            letter-spacing: 3px;
+        }
+        
+        /* Persona selector */
+        .persona-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            max-width: 1200px;
+            width: 100%;
+            margin-bottom: 40px;
+            padding: 0 20px;
+        }
+        
+        .persona-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(0, 206, 209, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        
+        .persona-card:hover {
+            background: rgba(0, 206, 209, 0.1);
+            border-color: rgba(0, 206, 209, 0.6);
+            transform: translateY(-2px);
+        }
+        
+        .persona-card.active {
+            background: rgba(0, 206, 209, 0.2);
+            border-color: #00ced1;
+            box-shadow: 0 0 20px rgba(0, 206, 209, 0.5);
+        }
+        
+        .persona-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+        
+        .persona-title {
+            font-size: 0.85rem;
+            opacity: 0.7;
+        }
+        
+        /* Voice interaction */
+        .voice-controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .voice-button {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 3px solid #00ced1;
+            background: radial-gradient(circle, rgba(0, 206, 209, 0.1), transparent);
+            color: #00ced1;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .voice-button:hover {
+            background: radial-gradient(circle, rgba(0, 206, 209, 0.2), transparent);
+            transform: scale(1.05);
+        }
+        
+        .voice-button.listening {
+            animation: listening-pulse 1.5s ease-in-out infinite;
+            background: radial-gradient(circle, rgba(0, 206, 209, 0.3), transparent);
+        }
+        
+        @keyframes listening-pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        /* Status display */
+        .status-display {
+            text-align: center;
+            font-size: 1.2rem;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .transcription {
+            font-style: italic;
+            opacity: 0.8;
+        }
+        
+        .thinking {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .thinking-dots {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .thinking-dots span {
+            width: 8px;
+            height: 8px;
+            background: #00ced1;
+            border-radius: 50%;
+            animation: bounce 1.4s ease-in-out infinite;
+        }
+        
+        .thinking-dots span:nth-child(2) {
+            animation-delay: 0.1s;
+        }
+        
+        .thinking-dots span:nth-child(3) {
+            animation-delay: 0.2s;
+        }
+        
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+            40% { transform: scale(1.2); opacity: 1; }
+        }
+        
+        /* Transition effect */
+        .particle-transition {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .oracle-title {
+                font-size: 3rem;
+            }
+            
+            .avatar-container {
+                width: 300px;
+                height: 300px;
+            }
+            
+            .persona-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="particle-canvas"></canvas>
+    
+    <div class="oracle-container">
+        <h1 class="oracle-title">INDIANA ORACLE</h1>
+        
+        <div class="avatar-container">
+            <div class="particle-avatar" id="particle-avatar">
+                <!-- TouchDesigner particle system will render here -->
+            </div>
+            <video id="avatar-video" autoplay muted playsinline></video>
+            <div class="hologram-rim"></div>
+            <canvas class="particle-transition" id="transition-canvas"></canvas>
+        </div>
+        
+        <div class="persona-grid" id="persona-grid">
+            <!-- Personas will be loaded here -->
+        </div>
+        
+        <div class="voice-controls">
+            <button class="voice-button" id="voice-button">
+                SPEAK
+            </button>
+            
+            <div class="status-display" id="status-display">
+                <div>Select a persona to begin</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class IndianaOracle {
+            constructor() {
+                this.ws = null;
+                this.currentPersona = null;
+                this.isListening = false;
+                this.isConnected = false;
+                this.sessionId = null;
+                
+                // HeyGen or fallback
+                this.useHeyGen = true;
+                this.avatarStream = null;
+                
+                // Elements
+                this.voiceButton = document.getElementById('voice-button');
+                this.statusDisplay = document.getElementById('status-display');
+                this.personaGrid = document.getElementById('persona-grid');
+                this.avatarVideo = document.getElementById('avatar-video');
+                this.particleAvatar = document.getElementById('particle-avatar');
+                
+                // Speech recognition
+                this.recognition = null;
+                this.initSpeechRecognition();
+                
+                // Initialize
+                this.connect();
+                this.bindEvents();
+                this.initParticleBackground();
+            }
+            
+            async connect() {
+                try {
+                    this.ws = new WebSocket('ws://localhost:8000/oracle/session');
+                    
+                    this.ws.onopen = () => {
+                        this.isConnected = true;
+                        console.log('Connected to Oracle server');
+                    };
+                    
+                    this.ws.onmessage = (event) => {
+                        const data = JSON.parse(event.data);
+                        this.handleMessage(data);
+                    };
+                    
+                    this.ws.onclose = () => {
+                        this.isConnected = false;
+                        console.log('Disconnected from Oracle server');
+                        setTimeout(() => this.connect(), 3000);
+                    };
+                    
+                } catch (error) {
+                    console.error('Connection error:', error);
+                }
+            }
+            
+            handleMessage(data) {
+                switch (data.type) {
+                    case 'welcome':
+                        this.loadPersonas(data.personas);
+                        break;
+                        
+                    case 'persona_selected':
+                        this.onPersonaSelected(data);
+                        break;
+                        
+                    case 'transcription_partial':
+                        this.showTranscription(data.text, true);
+                        break;
+                        
+                    case 'transcription_final':
+                        this.showTranscription(data.text, false);
+                        this.showThinking();
+                        break;
+                        
+                    case 'response_start':
+                        this.hideThinking();
+                        break;
+                        
+                    case 'response_chunk':
+                        this.processResponseChunk(data);
+                        break;
+                        
+                    case 'response_end':
+                        this.onResponseComplete();
+                        break;
+                        
+                    case 'transition_start':
+                        this.startTransitionEffect();
+                        break;
+                }
+            }
+            
+            loadPersonas(personaIds) {
+                // Fetch full persona info
+                fetch('/personas')
+                    .then(res => res.json())
+                    .then(personas => {
+                        this.personaGrid.innerHTML = '';
+                        
+                        Object.entries(personas).forEach(([id, info]) => {
+                            const card = document.createElement('div');
+                            card.className = 'persona-card';
+                            card.dataset.personaId = id;
+                            
+                            card.innerHTML = `
+                                <div class="persona-name">${info.name}</div>
+                                <div class="persona-title">${info.title}</div>
+                            `;
+                            
+                            card.addEventListener('click', () => this.selectPersona(id));
+                            this.personaGrid.appendChild(card);
+                        });
+                    });
+            }
+            
+            selectPersona(personaId) {
+                if (this.currentPersona === personaId) return;
+                
+                // Update UI
+                document.querySelectorAll('.persona-card').forEach(card => {
+                    card.classList.toggle('active', card.dataset.personaId === personaId);
+                });
+                
+                // Send to server
+                this.ws.send(JSON.stringify({
+                    type: 'select_persona',
+                    persona_id: personaId
+                }));
+            }
+            
+            onPersonaSelected(data) {
+                this.currentPersona = data.persona;
+                this.statusDisplay.innerHTML = `<div>${data.greeting}</div>`;
+                
+                // Enable voice button
+                this.voiceButton.disabled = false;
+                
+                // Setup avatar if available
+                if (data.avatar_ready && this.useHeyGen) {
+                    this.setupAvatar(data);
+                }
+            }
+            
+            bindEvents() {
+                this.voiceButton.addEventListener('click', () => {
+                    if (!this.currentPersona) {
+                        this.statusDisplay.textContent = 'Please select a persona first';
+                        return;
+                    }
+                    
+                    if (this.isListening) {
+                        this.stopListening();
+                    } else {
+                        this.startListening();
+                    }
+                });
+            }
+            
+            initSpeechRecognition() {
+                if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                    this.recognition = new SpeechRecognition();
+                    this.recognition.continuous = false;
+                    this.recognition.interimResults = true;
+                    this.recognition.lang = 'en-US';
+                    
+                    this.recognition.onresult = (event) => {
+                        let finalTranscript = '';
+                        let interimTranscript = '';
+                        
+                        for (let i = event.resultIndex; i < event.results.length; i++) {
+                            const transcript = event.results[i][0].transcript;
+                            if (event.results[i].isFinal) {
+                                finalTranscript += transcript;
+                            } else {
+                                interimTranscript += transcript;
+                            }
+                        }
+                        
+                        if (finalTranscript) {
+                            this.sendText(finalTranscript);
+                        } else if (interimTranscript) {
+                            this.showTranscription(interimTranscript, true);
+                        }
+                    };
+                    
+                    this.recognition.onerror = (event) => {
+                        console.error('Speech recognition error:', event.error);
+                        this.stopListening();
+                    };
+                    
+                    this.recognition.onend = () => {
+                        this.stopListening();
+                    };
+                }
+            }
+            
+            startListening() {
+                if (!this.recognition) return;
+                
+                this.isListening = true;
+                this.voiceButton.classList.add('listening');
+                this.voiceButton.textContent = 'LISTENING';
+                
+                try {
+                    this.recognition.start();
+                } catch (error) {
+                    console.error('Failed to start recognition:', error);
+                    this.stopListening();
+                }
+            }
+            
+            stopListening() {
+                this.isListening = false;
+                this.voiceButton.classList.remove('listening');
+                this.voiceButton.textContent = 'SPEAK';
+                
+                if (this.recognition) {
+                    try {
+                        this.recognition.stop();
+                    } catch (error) {
+                        // Ignore
+                    }
+                }
+            }
+            
+            sendText(text) {
+                this.ws.send(JSON.stringify({
+                    type: 'text_input',
+                    text: text
+                }));
+            }
+            
+            showTranscription(text, isPartial) {
+                this.statusDisplay.innerHTML = `
+                    <div class="transcription">
+                        ${isPartial ? '...' : ''} "${text}"
+                    </div>
+                `;
+            }
+            
+            showThinking() {
+                this.statusDisplay.innerHTML = `
+                    <div class="thinking">
+                        <span>Thinking</span>
+                        <div class="thinking-dots">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            hideThinking() {
+                this.statusDisplay.innerHTML = '';
+            }
+            
+            processResponseChunk(data) {
+                // Process audio
+                if (data.audio) {
+                    this.playAudioChunk(data.audio);
+                }
+                
+                // Process avatar video (HeyGen)
+                if (data.video && this.avatarVideo) {
+                    // Handle video stream
+                }
+                
+                // Process blend shapes (particles)
+                if (data.blend_shapes) {
+                    this.updateParticleAvatar(data.blend_shapes);
+                }
+            }
+            
+            playAudioChunk(audioBase64) {
+                // Convert and play audio
+                const audioData = atob(audioBase64);
+                const arrayBuffer = new ArrayBuffer(audioData.length);
+                const uint8Array = new Uint8Array(arrayBuffer);
+                
+                for (let i = 0; i < audioData.length; i++) {
+                    uint8Array[i] = audioData.charCodeAt(i);
+                }
+                
+                // Use Web Audio API for streaming playback
+                // ... implementation ...
+            }
+            
+            updateParticleAvatar(blendShapes) {
+                // Send blend shapes to TouchDesigner via WebSocket
+                if (window.tdWebSocket && window.tdWebSocket.readyState === WebSocket.OPEN) {
+                    window.tdWebSocket.send(JSON.stringify({
+                        type: 'blend_shapes',
+                        data: blendShapes
+                    }));
+                }
+            }
+            
+            onResponseComplete() {
+                this.statusDisplay.innerHTML = '<div>Ready for next question</div>';
+            }
+            
+            startTransitionEffect() {
+                // Particle dissolve effect
+                const canvas = document.getElementById('transition-canvas');
+                const ctx = canvas.getContext('2d');
+                
+                // Implement particle transition
+                // ... particle animation code ...
+            }
+            
+            initParticleBackground() {
+                const canvas = document.getElementById('particle-canvas');
+                const ctx = canvas.getContext('2d');
+                
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                
+                // Simple ambient particle system
+                const particles = [];
+                const particleCount = 100;
+                
+                for (let i = 0; i < particleCount; i++) {
+                    particles.push({
+                        x: Math.random() * canvas.width,
+                        y: Math.random() * canvas.height,
+                        vx: (Math.random() - 0.5) * 0.5,
+                        vy: (Math.random() - 0.5) * 0.5,
+                        size: Math.random() * 2 + 1,
+                        alpha: Math.random() * 0.5 + 0.2
+                    });
+                }
+                
+                function animate() {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    
+                    particles.forEach(particle => {
+                        // Update position
+                        particle.x += particle.vx;
+                        particle.y += particle.vy;
+                        
+                        // Wrap around edges
+                        if (particle.x < 0) particle.x = canvas.width;
+                        if (particle.x > canvas.width) particle.x = 0;
+                        if (particle.y < 0) particle.y = canvas.height;
+                        if (particle.y > canvas.height) particle.y = 0;
+                        
+                        // Draw particle
+                        ctx.beginPath();
+                        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+                        ctx.fillStyle = `rgba(0, 206, 209, ${particle.alpha})`;
+                        ctx.fill();
+                    });
+                    
+                    requestAnimationFrame(animate);
+                }
+                
+                animate();
+                
+                // Resize handler
+                window.addEventListener('resize', () => {
+                    canvas.width = window.innerWidth;
+                    canvas.height = window.innerHeight;
+                });
+            }
+        }
+        
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new IndianaOracle();
+        });
+    </script>
+</body>
+</html>

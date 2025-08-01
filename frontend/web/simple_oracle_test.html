@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Oracle Test Interface</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        .persona-selector {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .persona-button {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 12px 24px;
+            margin: 0 10px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 16px;
+        }
+        
+        .persona-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .persona-button.active {
+            background: #4CAF50;
+            border-color: #45a049;
+        }
+        
+        .chat-area {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            min-height: 300px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .message {
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            border-radius: 15px;
+            max-width: 80%;
+        }
+        
+        .user-message {
+            background: #2196F3;
+            margin-left: auto;
+            text-align: right;
+        }
+        
+        .ai-message {
+            background: #4CAF50;
+            margin-right: auto;
+        }
+        
+        .status-message {
+            background: #FF9800;
+            text-align: center;
+            font-style: italic;
+            margin: 0 auto;
+            max-width: 60%;
+        }
+        
+        .input-area {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        #messageInput {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+        }
+        
+        #sendButton {
+            background: #4CAF50;
+            border: none;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s ease;
+        }
+        
+        #sendButton:hover:not(:disabled) {
+            background: #45a049;
+        }
+        
+        #sendButton:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        
+        .connection-status {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 10px;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+        
+        .connected {
+            background: rgba(76, 175, 80, 0.3);
+        }
+        
+        .disconnected {
+            background: rgba(244, 67, 54, 0.3);
+        }
+        
+        .thinking-animation {
+            animation: blink 1s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔮 Simple Oracle Test</h1>
+        
+        <div class="persona-selector">
+            <button class="persona-button active" onclick="switchPersona('indiana-oracle')">
+                Indiana Oracle
+            </button>
+            <button class="persona-button" onclick="switchPersona('kurt-vonnegut')">
+                Kurt Vonnegut
+            </button>
+        </div>
+        
+        <div id="connectionStatus" class="connection-status disconnected">
+            Connecting to Oracle...
+        </div>
+        
+        <div id="chatArea" class="chat-area">
+            <div class="status-message">
+                Ready to start conversation...
+            </div>
+        </div>
+        
+        <div class="input-area">
+            <input type="text" id="messageInput" placeholder="Ask the Oracle..." 
+                   onkeypress="handleKeyPress(event)">
+            <button id="sendButton" onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        class SimpleOracleClient {
+            constructor() {
+                this.ws = null;
+                this.currentPersona = 'indiana-oracle';
+                this.isConnected = false;
+                this.connect();
+            }
+            
+            connect() {
+                this.ws = new WebSocket('ws://localhost:8500/oracle/session');
+                
+                this.ws.onopen = () => {
+                    console.log('Connected to Oracle');
+                    this.isConnected = true;
+                    this.updateConnectionStatus('Connected to Oracle', true);
+                };
+                
+                this.ws.onclose = () => {
+                    console.log('Disconnected from Oracle');
+                    this.isConnected = false;
+                    this.updateConnectionStatus('Disconnected from Oracle', false);
+                    
+                    // Attempt to reconnect after 3 seconds
+                    setTimeout(() => this.connect(), 3000);
+                };
+                
+                this.ws.onerror = (error) => {
+                    console.error('WebSocket error:', error);
+                    this.updateConnectionStatus('Connection Error', false);
+                };
+                
+                this.ws.onmessage = (event) => {
+                    this.handleMessage(JSON.parse(event.data));
+                };
+            }
+            
+            handleMessage(data) {
+                const chatArea = document.getElementById('chatArea');
+                
+                switch(data.type) {
+                    case 'status':
+                        this.addMessage(data.message, 'status');
+                        break;
+                        
+                    case 'ai_response':
+                        this.addMessage(data.text, 'ai', data.persona);
+                        break;
+                        
+                    case 'audio_response':
+                        this.playAudio(data.audio);
+                        break;
+                        
+                    case 'persona_switched':
+                        this.addMessage(data.message, 'status');
+                        break;
+                        
+                    case 'error':
+                        this.addMessage(`Error: ${data.message}`, 'status');
+                        break;
+                }
+                
+                // Enable send button
+                document.getElementById('sendButton').disabled = false;
+                document.getElementById('messageInput').disabled = false;
+            }
+            
+            sendMessage(text) {
+                if (!this.isConnected || !text.trim()) return;
+                
+                // Add user message to chat
+                this.addMessage(text, 'user');
+                
+                // Send to server
+                this.ws.send(JSON.stringify({
+                    type: 'user_message',
+                    text: text,
+                    persona: this.currentPersona
+                }));
+                
+                // Disable input while processing
+                document.getElementById('sendButton').disabled = true;
+                document.getElementById('messageInput').disabled = true;
+                document.getElementById('messageInput').value = '';
+            }
+            
+            switchPersona(persona) {
+                this.currentPersona = persona;
+                
+                // Update UI
+                document.querySelectorAll('.persona-button').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                event.target.classList.add('active');
+                
+                // Notify server
+                if (this.isConnected) {
+                    this.ws.send(JSON.stringify({
+                        type: 'switch_persona',
+                        persona: persona
+                    }));
+                }
+            }
+            
+            addMessage(text, type, persona = null) {
+                const chatArea = document.getElementById('chatArea');
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${type}-message`;
+                
+                if (type === 'status' && text.includes('thinking')) {
+                    messageDiv.innerHTML = text.replace('...', ' <span class="thinking-animation">...</span>');
+                } else {
+                    messageDiv.textContent = text;
+                }
+                
+                chatArea.appendChild(messageDiv);
+                chatArea.scrollTop = chatArea.scrollHeight;
+            }
+            
+            playAudio(base64Audio) {
+                try {
+                    const audio = new Audio(`data:audio/mp3;base64,${base64Audio}`);
+                    audio.play().catch(e => console.error('Audio play failed:', e));
+                } catch (e) {
+                    console.error('Audio creation failed:', e);
+                }
+            }
+            
+            updateConnectionStatus(message, connected) {
+                const statusDiv = document.getElementById('connectionStatus');
+                statusDiv.textContent = message;
+                statusDiv.className = `connection-status ${connected ? 'connected' : 'disconnected'}`;
+            }
+        }
+        
+        // Global functions
+        let oracleClient;
+        
+        function initializeOracle() {
+            oracleClient = new SimpleOracleClient();
+        }
+        
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            oracleClient.sendMessage(input.value);
+        }
+        
+        function switchPersona(persona) {
+            oracleClient.switchPersona(persona);
+        }
+        
+        function handleKeyPress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+        
+        // Initialize when page loads
+        window.addEventListener('load', initializeOracle);
+    </script>
+</body>
+</html>

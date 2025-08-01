@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Image Test</title>
+    <style>
+        body { background: black; color: white; text-align: center; padding: 20px; }
+        .test-frame {
+            width: 800px;
+            height: 400px;
+            background: url("/assets/oracle-frame.png") center/contain no-repeat;
+            border: 2px solid red;
+            margin: 20px auto;
+        }
+        img { max-width: 100%; height: auto; }
+    </style>
+</head>
+<body>
+    <h1>Oracle Frame Image Test</h1>
+    
+    <h2>Method 1: CSS Background</h2>
+    <div class="test-frame"></div>
+    
+    <h2>Method 2: Direct IMG tag</h2>
+    <img src="/assets/oracle-frame.png" alt="Oracle Frame">
+    
+    <h2>Method 3: Direct link</h2>
+    <a href="/assets/oracle-frame.png" target="_blank">Open image directly</a>
+</body>
+</html>
