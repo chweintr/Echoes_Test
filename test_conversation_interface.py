@@ -387,8 +387,10 @@ def main():
     port = int(os.getenv("PORT", 8500))
     
     logger.info("Starting Simple Oracle Test Interface...")
-    logger.info(f"Web interface: http://localhost:{port}")
-    logger.info(f"WebSocket: ws://localhost:{port}/oracle/session")
+    logger.info(f"Server starting on 0.0.0.0:{port}")
+    logger.info(f"Web interface: http://0.0.0.0:{port}")
+    logger.info(f"WebSocket: ws://0.0.0.0:{port}/oracle/session")
+    print(f"Listening on port {port}")  # Railway specifically looks for this
     
     uvicorn.run(
         oracle.app,
