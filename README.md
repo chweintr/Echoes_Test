@@ -170,15 +170,31 @@ indiana-oracle-main/
 - **Depth Camera**: Visitor detection and positioning
 - **Multi-language Support**: Accessible to diverse audiences
 
+## Security
+
+The Oracle interface includes password protection to prevent unauthorized API usage. 
+
+**Default Password:** `vonnegut1922`
+
+To change the password:
+1. Set `ORACLE_PASSWORD` in your `.env` file
+2. Update the password in `frontend/web/oracle_interface_styled.html` (line 584)
+
+**Important:** Always use password protection when deploying publicly to avoid unexpected API costs.
+
 ## Quick Start
 
 ```bash
 # Install dependencies
 pip install -r requirements.txt
 
-# Start the Oracle server
-python main_oracle.py
+# Copy environment template
+cp .env.example .env
+# Edit .env with your API keys
 
-# Launch TouchDesigner particle system
-open touchdesigner/oracle_particles.toe
+# Start the Oracle server
+python test_conversation_interface.py
+
+# Access the interface at http://localhost:8500
+# Enter password: vonnegut1922
 ```

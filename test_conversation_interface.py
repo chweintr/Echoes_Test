@@ -35,6 +35,9 @@ class SimpleOracleInterface:
         self.openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
         self.elevenlabs_key = os.getenv("ELEVENLABS_API_KEY")
         
+        # Password protection
+        self.oracle_password = os.getenv("ORACLE_PASSWORD", "vonnegut1922")
+        
         # Initialize RAG system
         self.rag = SimpleRAG()
         if not self.rag.loaded:
@@ -219,6 +222,12 @@ BLOOMINGTON/IU CONNECTIONS (speak about these warmly):
                 "png_exists": os.path.exists(os.path.join(assets_path, "oracle-frame.png")),
                 "webp_exists": os.path.exists(os.path.join(assets_path, "oracle-frame.webp"))
             }
+        
+        @self.app.post("/verify-password")
+        async def verify_password(data: dict):
+            """Verify Oracle access password"""
+            provided_password = data.get("password", "")
+            return {"valid": provided_password == self.oracle_password}
             
         @self.app.websocket("/oracle/session")
         async def oracle_session(websocket: WebSocket):

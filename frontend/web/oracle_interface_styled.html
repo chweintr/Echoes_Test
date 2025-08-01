@@ -272,11 +272,103 @@
         .loading-overlay.hidden {
             display: none;
         }
+        
+        /* Password protection overlay */
+        .password-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+        
+        .password-overlay.hidden {
+            display: none;
+        }
+        
+        .password-dialog {
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px solid var(--cyan-neon);
+            border-radius: 15px;
+            padding: 2rem;
+            text-align: center;
+            box-shadow: 0 0 30px var(--cyan-neon);
+            backdrop-filter: blur(10px);
+            max-width: 400px;
+            width: 90%;
+        }
+        
+        .password-dialog h2 {
+            color: var(--cyan-neon);
+            margin-bottom: 1rem;
+            text-shadow: 0 0 10px var(--cyan-neon);
+        }
+        
+        .password-dialog p {
+            color: white;
+            margin-bottom: 1.5rem;
+            opacity: 0.8;
+        }
+        
+        #passwordInput {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid var(--magenta-neon);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            border-radius: 25px;
+            outline: none;
+            font-size: 1rem;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+        
+        #passwordInput:focus {
+            box-shadow: 0 0 15px var(--magenta-neon);
+        }
+        
+        .password-submit {
+            background: linear-gradient(135deg, var(--cyan-neon), var(--magenta-neon));
+            border: none;
+            color: white;
+            padding: 0.8rem 2rem;
+            border-radius: 25px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 1rem;
+        }
+        
+        .password-submit:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px var(--magenta-neon);
+        }
+        
+        .password-error {
+            color: #ff4444;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
     </style>
 </head>
 <body>
     <div class="loading-overlay" id="loadingOverlay">
         Initializing Oracle System...
+    </div>
+    
+    <div class="password-overlay" id="passwordOverlay">
+        <div class="password-dialog">
+            <h2>Oracle Access Required</h2>
+            <p>Enter the access code to commune with the Oracle:</p>
+            <input type="password" id="passwordInput" placeholder="Access Code" onkeypress="handlePasswordKeyPress(event)">
+            <button class="password-submit" onclick="checkPassword()">Enter</button>
+            <div class="password-error" id="passwordError"></div>
+        </div>
     </div>
     
     <div class="frame">
@@ -468,10 +560,6 @@
         // Global instance
         let oracleClient;
         
-        function initializeOracle() {
-            oracleClient = new OracleClient();
-        }
-        
         function sendMessage() {
             const input = document.getElementById('prompt');
             oracleClient.sendMessage(input.value);
@@ -488,8 +576,42 @@
             }
         }
         
-        // Initialize on load
-        window.addEventListener('load', initializeOracle);
+        // Password protection
+        const ORACLE_PASSWORD = 'vonnegut1922'; // Change this to your desired password
+        let authenticated = false;
+        
+        function checkPassword() {
+            const input = document.getElementById('passwordInput');
+            const error = document.getElementById('passwordError');
+            
+            if (input.value === ORACLE_PASSWORD) {
+                authenticated = true;
+                document.getElementById('passwordOverlay').classList.add('hidden');
+                initializeOracle();
+                error.textContent = '';
+            } else {
+                error.textContent = 'Incorrect access code. Try again.';
+                input.value = '';
+                input.focus();
+            }
+        }
+        
+        function handlePasswordKeyPress(event) {
+            if (event.key === 'Enter') {
+                checkPassword();
+            }
+        }
+        
+        // Show password overlay on load
+        window.addEventListener('load', () => {
+            document.getElementById('passwordInput').focus();
+        });
+        
+        // Modified initialize function
+        function initializeOracle() {
+            if (!authenticated) return;
+            oracleClient = new OracleClient();
+        }
     </script>
 </body>
 </html>
