@@ -409,7 +409,10 @@
             }
             
             connect() {
-                this.ws = new WebSocket('ws://localhost:8500/oracle/session');
+                // Use current host for WebSocket connection (works for both local and deployed)
+                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                const host = window.location.host;
+                this.ws = new WebSocket(`${protocol}//${host}/oracle/session`);
                 
                 this.ws.onopen = () => {
                     console.log('Connected to Oracle');

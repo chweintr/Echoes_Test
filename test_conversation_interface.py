@@ -383,14 +383,17 @@ def main():
     """Start the Oracle interface"""
     oracle = SimpleOracleInterface()
     
+    # Use Railway's PORT or fallback to 8500
+    port = int(os.getenv("PORT", 8500))
+    
     logger.info("Starting Simple Oracle Test Interface...")
-    logger.info("Web interface: http://localhost:8500")
-    logger.info("WebSocket: ws://localhost:8500/oracle/session")
+    logger.info(f"Web interface: http://localhost:{port}")
+    logger.info(f"WebSocket: ws://localhost:{port}/oracle/session")
     
     uvicorn.run(
         oracle.app,
         host="0.0.0.0",
-        port=8500,
+        port=port,
         log_level="info"
     )
 
